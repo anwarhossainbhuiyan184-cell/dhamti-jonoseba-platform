@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AreaStat, CategoryStat, Language, ProblemReport, UrgencyLevel } from '../types';
 import { UI_STRINGS } from '../data/mockData';
 import { X, Check, Copy, MessageSquareText, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { sanitizeString, sanitizePhoneNumber } from '../services/security';
 
 interface SubmitProblemModalProps {
   isOpen: boolean;
@@ -42,17 +43,23 @@ export const SubmitProblemModal: React.FC<SubmitProblemModalProps> = ({
     e.preventDefault();
     setErrorMsg('');
 
-    if (!title.trim()) {
+    const cleanTitle = sanitizeString(title, 120);
+    const cleanDesc = sanitizeString(description, 1000);
+    const cleanLocation = sanitizeString(specificLocation, 150);
+    const cleanName = sanitizeString(citizenName, 60);
+    const cleanPhone = isAnonymous ? '' : sanitizePhoneNumber(phone);
+
+    if (!cleanTitle) {
       setErrorMsg(language === 'bn' ? 'অনুগ্রহ করে সমস্যার শিরোনাম দিন।' : 'Please provide an issue title.');
       return;
     }
 
-    if (!description.trim()) {
+    if (!cleanDesc) {
       setErrorMsg(language === 'bn' ? 'অনুগ্রহ করে সমস্যার বিবরণ বিস্তারিত লিখুন।' : 'Please describe the problem.');
       return;
     }
 
-    if (!specificLocation.trim()) {
+    if (!cleanLocation) {
       setErrorMsg(language === 'bn' ? 'নির্দিষ্ট সড়ক বা এলাকার বিবরণ দিন।' : 'Please provide specific location/landmark.');
       return;
     }
@@ -65,13 +72,13 @@ export const SubmitProblemModal: React.FC<SubmitProblemModalProps> = ({
     const newProblem: ProblemReport = {
       id: newId,
       trackingCode,
-      title: title.trim(),
-      description: description.trim(),
+      title: cleanTitle,
+      description: cleanDesc,
       category,
       ward,
-      specificLocation: specificLocation.trim(),
-      citizenName: isAnonymous ? (language === 'bn' ? 'বেনামী নাগরিক' : 'Anonymous Citizen') : (citizenName.trim() || (language === 'bn' ? 'এলাকাবাসী' : 'Local Resident')),
-      phone: isAnonymous ? '' : phone.trim(),
+      specificLocation: cleanLocation,
+      citizenName: isAnonymous ? (language === 'bn' ? 'গোপন নাগরিক' : 'Anonymous Citizen') : (cleanName || (language === 'bn' ? 'এলাকাবাসী' : 'Local Resident')),
+      phone: cleanPhone,
       isAnonymous,
       urgency,
       status: 'pending',

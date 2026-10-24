@@ -166,7 +166,9 @@ export const ProblemDetailModal: React.FC<ProblemDetailModalProps> = ({
               </span>
               <div className="flex items-center gap-1.5 font-semibold text-neutral-900">
                 <Calendar className="w-4 h-4 text-neutral-500 shrink-0" />
-                <span>{new Date(problem.createdAt).toLocaleDateString()} · {problem.citizenName}</span>
+                <span>
+                  {new Date(problem.createdAt).toLocaleDateString()} · {problem.isAnonymous ? (language === 'bn' ? 'গোপন নাগরিক' : 'Anonymous Citizen') : problem.citizenName}
+                </span>
               </div>
             </div>
           </div>

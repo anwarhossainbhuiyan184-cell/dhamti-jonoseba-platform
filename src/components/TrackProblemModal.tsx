@@ -27,17 +27,25 @@ export const TrackProblemModal: React.FC<TrackProblemModalProps> = ({
     e.preventDefault();
     setSearched(true);
     const cleanQuery = query.trim().toLowerCase();
+    const cleanDigits = query.replace(/[^0-9]/g, '');
 
     if (!cleanQuery) {
       setResult(null);
       return;
     }
 
-    const found = problems.find(
-      (p) =>
-        p.trackingCode.toLowerCase() === cleanQuery ||
-        (p.phone && p.phone.replace(/[^0-9]/g, '').includes(cleanQuery.replace(/[^0-9]/g, '')))
-    );
+    const found = problems.find((p) => {
+      // 1. Exact tracking code match
+      if (p.trackingCode.toLowerCase() === cleanQuery) {
+        return true;
+      }
+      // 2. Full phone match (only if not anonymous and query has at least 10 digits)
+      if (!p.isAnonymous && p.phone && cleanDigits.length >= 10) {
+        const problemDigits = p.phone.replace(/[^0-9]/g, '');
+        return problemDigits === cleanDigits;
+      }
+      return false;
+    });
 
     setResult(found || null);
   };
@@ -115,21 +123,13 @@ export const TrackProblemModal: React.FC<TrackProblemModalProps> = ({
           </form>
 
           {/* Quick Guidance Hint */}
-          <div className="mt-2 text-[11px] text-neutral-500">
-            {problems.length > 0 ? (
-              <span className="flex items-center gap-1">
-                <span>{language === 'bn' ? 'সর্বশেষ ট্র্যাকিং কোড:' : 'Latest tracking code:'}</span>
-                <button
-                  type="button"
-                  onClick={() => setQuery(problems[0].trackingCode)}
-                  className="font-mono text-emerald-700 underline font-semibold cursor-pointer"
-                >
-                  {problems[0].trackingCode}
-                </button>
-              </span>
-            ) : (
-              <span>{language === 'bn' ? 'অভিযোগ দাখিলের পর প্রাপ্ত ট্র্যাকিং কোড বা মোবাইল নম্বর দিন।' : 'Enter the tracking code or phone number provided upon submission.'}</span>
-            )}
+          <div className="mt-2 text-[11px] text-neutral-500 flex items-center gap-1.5">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+            <span>
+              {language === 'bn'
+                ? 'অভিযোগ দাখিলের পর প্রাপ্ত ট্র্যাকিং কোড (উদাঃ JNS-2026-XXXX) দিয়ে অনুসন্ধান করুন।'
+                : 'Enter the tracking code (e.g. JNS-2026-XXXX) provided upon submission.'}
+            </span>
           </div>
 
           {/* Result Area */}

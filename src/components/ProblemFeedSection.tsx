@@ -61,7 +61,7 @@ export const ProblemFeedSection: React.FC<ProblemFeedSectionProps> = ({
         const matchesDesc = item.description.toLowerCase().includes(query);
         const matchesLocation = item.specificLocation.toLowerCase().includes(query);
         const matchesCode = item.trackingCode.toLowerCase().includes(query);
-        const matchesName = item.citizenName.toLowerCase().includes(query);
+        const matchesName = !item.isAnonymous && item.citizenName.toLowerCase().includes(query);
         return matchesTitle || matchesDesc || matchesLocation || matchesCode || matchesName;
       }
       return true;

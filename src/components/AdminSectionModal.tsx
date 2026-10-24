@@ -21,8 +21,19 @@ import {
   Trash2,
   Eye,
   KeyRound,
-  RefreshCw
+  RefreshCw,
+  ShieldAlert
 } from 'lucide-react';
+import {
+  verifyAdminPin,
+  checkLockoutStatus,
+  isAdminAuthenticated,
+  revokeAdminSession,
+  updateAdminPin,
+  sanitizeString,
+  sanitizeForCsv,
+  validateImageFile
+} from '../services/security';
 
 interface AdminSectionModalProps {
   isOpen: boolean;
@@ -55,13 +66,33 @@ export const AdminSectionModal: React.FC<AdminSectionModalProps> = ({
 }) => {
   // Admin Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem('dhamti_admin_auth') === 'true';
+    return isAdminAuthenticated();
   });
   const [pinInput, setPinInput] = useState('');
-  const [pinError, setPinError] = useState(false);
-  const [storedPin, setStoredPin] = useState<string>(() => {
-    return localStorage.getItem('dhamti_admin_pin') || '223344';
+  const [pinError, setPinError] = useState<string>('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [lockoutRemaining, setLockoutRemaining] = useState<number>(() => {
+    return checkLockoutStatus().remainingSeconds;
   });
+  const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
+
+  // Periodic session & lockout countdown timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      // Session validation
+      if (isAuthenticated && !isAdminAuthenticated()) {
+        setIsAuthenticated(false);
+      }
+      // Lockout countdown
+      const status = checkLockoutStatus();
+      if (status.isLocked) {
+        setLockoutRemaining(status.remainingSeconds);
+      } else if (lockoutRemaining > 0) {
+        setLockoutRemaining(0);
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isAuthenticated, lockoutRemaining]);
 
   // Active Tab: 'complaints' | 'profile_settings'
   const [activeTab, setActiveTab] = useState<'complaints' | 'profile_settings'>('complaints');
@@ -86,8 +117,11 @@ export const AdminSectionModal: React.FC<AdminSectionModalProps> = ({
   const [editImage, setEditImage] = useState<string | null>(leaderProfile.profileImage);
   const [profileSuccessMsg, setProfileSuccessMsg] = useState(false);
 
-  // New PIN State
+  // New PIN State with Current PIN Verification
+  const [currentPin, setCurrentPin] = useState('');
   const [newPin, setNewPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [pinChangeError, setPinChangeError] = useState('');
   const [pinSuccessMsg, setPinSuccessMsg] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -111,46 +145,76 @@ export const AdminSectionModal: React.FC<AdminSectionModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Handle PIN Login
-  const handleLogin = (e: React.FormEvent) => {
+  // Handle Cryptographic PIN Login with Rate-Limiting Lockout
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pinInput === storedPin || pinInput === '223344') {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('dhamti_admin_auth', 'true');
-      setPinError(false);
-      setPinInput('');
-    } else {
-      setPinError(true);
+    if (lockoutRemaining > 0 || isVerifying || !pinInput.trim()) return;
+
+    setIsVerifying(true);
+    setPinError('');
+
+    try {
+      const res = await verifyAdminPin(pinInput);
+      setIsVerifying(false);
+
+      if (res.success) {
+        setIsAuthenticated(true);
+        setPinError('');
+        setPinInput('');
+        setAttemptsRemaining(null);
+      } else {
+        if (res.locked) {
+          setLockoutRemaining(res.remainingSeconds);
+          setPinError(language === 'bn' ? 'অতিরিক্ত ভুল পিন দেওয়ার কারণে ৫ মিনিটের জন্য লক করা হয়েছে।' : 'Too many failed attempts. Locked for 5 minutes.');
+        } else {
+          setAttemptsRemaining(res.remainingAttempts);
+          setPinError(
+            language === 'bn'
+              ? `ভুল পিন কোড! আর ${res.remainingAttempts} বার চেষ্টা করা যাবে।`
+              : `Incorrect PIN! ${res.remainingAttempts} attempts remaining.`
+          );
+        }
+      }
+    } catch {
+      setIsVerifying(false);
+      setPinError(language === 'bn' ? 'যাচাই ব্যর্থ হয়েছে।' : 'Verification failed.');
     }
   };
 
   const handleLogoutAdmin = () => {
     setIsAuthenticated(false);
-    sessionStorage.removeItem('dhamti_admin_auth');
+    revokeAdminSession();
+    setPinInput('');
+    setPinError('');
   };
 
-  // Handle Profile Update
+  // Handle Profile Update with Input Sanitization
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     onUpdateLeaderProfile({
       ...leaderProfile,
-      name: editName.trim(),
-      promise: editPromise.trim(),
-      mainSlogan: editMainSlogan.trim(),
-      subSlogan: editSubSlogan.trim(),
-      phone: editPhone.trim(),
-      email: editEmail.trim(),
-      officeAddress: editAddress.trim(),
+      name: sanitizeString(editName, 60),
+      promise: sanitizeString(editPromise, 150),
+      mainSlogan: sanitizeString(editMainSlogan, 120),
+      subSlogan: sanitizeString(editSubSlogan, 120),
+      phone: sanitizeString(editPhone, 20),
+      email: sanitizeString(editEmail, 60),
+      officeAddress: sanitizeString(editAddress, 120),
       profileImage: editImage,
     });
     setProfileSuccessMsg(true);
     setTimeout(() => setProfileSuccessMsg(false), 3000);
   };
 
-  // Handle Photo File Upload
+  // Handle Photo File Upload with Safe MIME and Size Validation
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const validation = validateImageFile(file, 2 * 1024 * 1024);
+      if (!validation.valid) {
+        alert(language === 'bn' ? 'শুধুমাত্র JPG, PNG বা WebP ছবি গ্রহণযোগ্য (সর্বোচ্চ 2MB)।' : 'Only JPG, PNG or WebP images up to 2MB are supported.');
+        return;
+      }
       const reader = new FileReader();
       reader.onload = () => {
         const base64 = reader.result as string;
@@ -160,15 +224,37 @@ export const AdminSectionModal: React.FC<AdminSectionModalProps> = ({
     }
   };
 
-  // Handle Change PIN
-  const handleChangePin = (e: React.FormEvent) => {
+  // Handle Secure Change PIN (Requires Current PIN + Cryptographic Hash)
+  const handleChangePin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPin.trim().length >= 4) {
-      setStoredPin(newPin.trim());
-      localStorage.setItem('dhamti_admin_pin', newPin.trim());
+    setPinChangeError('');
+
+    if (!currentPin.trim()) {
+      setPinChangeError(language === 'bn' ? 'বর্তমান পিন দিন।' : 'Enter current PIN.');
+      return;
+    }
+    if (newPin.trim().length < 4) {
+      setPinChangeError(language === 'bn' ? 'নতুন পিন কমপক্ষে ৪ সংখ্যার হতে হবে।' : 'New PIN must be at least 4 digits.');
+      return;
+    }
+    if (newPin !== confirmPin) {
+      setPinChangeError(language === 'bn' ? 'নতুন পিন দুটি মেলেনি।' : 'New PINs do not match.');
+      return;
+    }
+
+    const res = await updateAdminPin(currentPin, newPin);
+    if (res.success) {
+      setCurrentPin('');
       setNewPin('');
+      setConfirmPin('');
       setPinSuccessMsg(true);
-      setTimeout(() => setPinSuccessMsg(false), 3000);
+      setTimeout(() => setPinSuccessMsg(false), 4000);
+    } else {
+      if (res.error === 'invalid_current_pin') {
+        setPinChangeError(language === 'bn' ? 'বর্তমান পিনটি সঠিক নয়।' : 'Incorrect current PIN.');
+      } else {
+        setPinChangeError(language === 'bn' ? 'পিন আপডেট ব্যর্থ হয়েছে।' : 'PIN update failed.');
+      }
     }
   };
 
@@ -197,20 +283,20 @@ export const AdminSectionModal: React.FC<AdminSectionModalProps> = ({
     setActionNote('');
   };
 
-  // Export CSV
+  // Export CSV with CSV Formula Injection Protection
   const handleExportCSV = () => {
     const headers = ['Tracking Code', 'Title', 'Ward', 'Category', 'Urgency', 'Status', 'Location', 'Citizen Name', 'Mobile Number', 'Date'];
     const rows = problems.map((p) => [
-      p.trackingCode,
-      `"${p.title.replace(/"/g, '""')}"`,
-      p.ward,
-      p.category,
-      p.urgency,
-      p.status,
-      `"${p.specificLocation.replace(/"/g, '""')}"`,
-      `"${p.citizenName.replace(/"/g, '""')}"`,
-      p.phone || 'N/A',
-      new Date(p.createdAt).toLocaleString()
+      sanitizeForCsv(p.trackingCode),
+      `"${sanitizeForCsv(p.title).replace(/"/g, '""')}"`,
+      sanitizeForCsv(p.ward),
+      sanitizeForCsv(p.category),
+      sanitizeForCsv(p.urgency),
+      sanitizeForCsv(p.status),
+      `"${sanitizeForCsv(p.specificLocation).replace(/"/g, '""')}"`,
+      `"${sanitizeForCsv(p.citizenName).replace(/"/g, '""')}"`,
+      sanitizeForCsv(p.phone || 'N/A'),
+      sanitizeForCsv(new Date(p.createdAt).toLocaleString())
     ]);
 
     const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\r\n');
@@ -303,33 +389,57 @@ export const AdminSectionModal: React.FC<AdminSectionModalProps> = ({
               </p>
 
               <form onSubmit={handleLogin} className="mt-6 space-y-4">
-                <div>
-                  <input
-                    type="password"
-                    maxLength={8}
-                    autoFocus
-                    value={pinInput}
-                    onChange={(e) => setPinInput(e.target.value)}
-                    placeholder="••••••"
-                    className="w-full text-center tracking-widest text-lg font-mono py-3 px-4 bg-neutral-50 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white"
-                  />
-                  {pinError && (
-                    <span className="text-xs text-red-600 font-semibold block mt-1.5">
-                      {language === 'bn' ? 'ভুল পিন কোড! পুনরায় চেষ্টা করুন।' : 'Incorrect PIN! Please try again.'}
-                    </span>
-                  )}
-                </div>
+                {lockoutRemaining > 0 ? (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-800 text-xs text-left">
+                    <div className="flex items-center gap-2 font-bold mb-1">
+                      <ShieldAlert className="w-4 h-4 text-red-600 shrink-0" />
+                      <span>{language === 'bn' ? 'অতিরিক্ত ভুল পিন - সিস্টেম সাময়িক লক' : 'Too Many Attempts - Temporarily Locked'}</span>
+                    </div>
+                    <p className="text-[11px] text-red-700">
+                      {language === 'bn'
+                        ? `নিরাপত্তার স্বার্থে পিন প্রবেশ বন্ধ রাখা হয়েছে। পুনরায় চেষ্টা করুন ${Math.floor(lockoutRemaining / 60)} মিনিট ${lockoutRemaining % 60} সেকেন্ড পর।`
+                        : `Access is temporarily locked for security. Please retry in ${Math.floor(lockoutRemaining / 60)}m ${lockoutRemaining % 60}s.`}
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="password"
+                      maxLength={16}
+                      autoFocus
+                      disabled={isVerifying}
+                      value={pinInput}
+                      onChange={(e) => setPinInput(e.target.value)}
+                      placeholder="••••••"
+                      className="w-full text-center tracking-widest text-lg font-mono py-3 px-4 bg-neutral-50 border border-neutral-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white disabled:opacity-50"
+                    />
+                    {pinError && (
+                      <span className="text-xs text-red-600 font-semibold block mt-1.5">
+                        {pinError}
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 <button
                   type="submit"
-                  className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm rounded-xl transition-all shadow-sm cursor-pointer"
+                  disabled={lockoutRemaining > 0 || isVerifying || !pinInput.trim()}
+                  className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 disabled:bg-neutral-300 disabled:cursor-not-allowed text-white font-bold text-sm rounded-xl transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2"
                 >
-                  {language === 'bn' ? 'লগইন করুন' : 'Unlock Admin Panel'}
+                  {isVerifying ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>{language === 'bn' ? 'যাচাই করা হচ্ছে...' : 'Verifying...'}</span>
+                    </>
+                  ) : (
+                    <span>{language === 'bn' ? 'লগইন করুন' : 'Unlock Admin Panel'}</span>
+                  )}
                 </button>
 
-                <p className="text-[11px] text-neutral-400">
-                  {language === 'bn' ? 'অননুমোদিত প্রবেশ সম্পূর্ণ নিষিদ্ধ ও সুরক্ষিত' : 'Restricted authorized access only'}
-                </p>
+                <div className="pt-2 flex items-center justify-center gap-1.5 text-[11px] text-neutral-400">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{language === 'bn' ? 'SHA-256 এনক্রিপ্টেড ও সুরক্ষিত ব্রুট-ফোর্স প্রটেকশন' : 'SHA-256 Encrypted & Anti-Brute Force Protected'}</span>
+                </div>
               </form>
             </div>
           </div>
@@ -930,32 +1040,79 @@ export const AdminSectionModal: React.FC<AdminSectionModalProps> = ({
 
                 {/* 4. Admin Security PIN Change */}
                 <div className="bg-neutral-50 p-5 rounded-2xl border border-neutral-200 mt-6 space-y-3">
-                  <h4 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
-                    <KeyRound className="w-4 h-4 text-emerald-700" />
-                    <span>{language === 'bn' ? 'অ্যাডমিন পিন পরিবর্তন করুন' : 'Change Admin Security PIN'}</span>
-                  </h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+                      <KeyRound className="w-4 h-4 text-emerald-700" />
+                      <span>{language === 'bn' ? 'অ্যাডমিন সিকিউরিটি পিন পরিবর্তন' : 'Change Admin Security PIN'}</span>
+                    </h4>
+                    <span className="text-[11px] text-neutral-400">
+                      {language === 'bn' ? 'SHA-256 সুরক্ষিত' : 'SHA-256 Protected'}
+                    </span>
+                  </div>
 
                   {pinSuccessMsg && (
-                    <span className="text-xs text-emerald-700 font-bold block">
-                      {language === 'bn' ? 'পিন সফলভাবে পরিবর্তন করা হয়েছে!' : 'PIN successfully changed!'}
+                    <span className="text-xs text-emerald-700 font-bold block bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
+                      {language === 'bn' ? '✓ পিন সফলভাবে পরিবর্তন করা হয়েছে!' : '✓ PIN successfully updated!'}
                     </span>
                   )}
 
-                  <form onSubmit={handleChangePin} className="flex gap-2 max-w-sm">
-                    <input
-                      type="password"
-                      maxLength={8}
-                      value={newPin}
-                      onChange={(e) => setNewPin(e.target.value)}
-                      placeholder={language === 'bn' ? 'নতুন ৪-সংখ্যার পিন দিন' : 'Enter new 4-digit PIN'}
-                      className="flex-1 px-3 py-2 text-xs bg-white border border-neutral-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-600"
-                    />
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-xs font-bold shrink-0 cursor-pointer"
-                    >
-                      {language === 'bn' ? 'আপডেট' : 'Update PIN'}
-                    </button>
+                  {pinChangeError && (
+                    <span className="text-xs text-red-600 font-semibold block bg-red-50 p-2.5 rounded-xl border border-red-200">
+                      {pinChangeError}
+                    </span>
+                  )}
+
+                  <form onSubmit={handleChangePin} className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-neutral-600 mb-1">
+                        {language === 'bn' ? 'বর্তমান পিন' : 'Current PIN'}
+                      </label>
+                      <input
+                        type="password"
+                        maxLength={16}
+                        required
+                        value={currentPin}
+                        onChange={(e) => setCurrentPin(e.target.value)}
+                        placeholder="••••••"
+                        className="w-full px-3 py-2 text-xs bg-white border border-neutral-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-neutral-600 mb-1">
+                        {language === 'bn' ? 'নতুন পিন (কমপক্ষে ৪ সংখ্যা)' : 'New PIN (min 4 chars)'}
+                      </label>
+                      <input
+                        type="password"
+                        maxLength={16}
+                        required
+                        value={newPin}
+                        onChange={(e) => setNewPin(e.target.value)}
+                        placeholder="••••••"
+                        className="w-full px-3 py-2 text-xs bg-white border border-neutral-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-neutral-600 mb-1">
+                        {language === 'bn' ? 'নতুন পিন নিশ্চিত করুন' : 'Confirm New PIN'}
+                      </label>
+                      <input
+                        type="password"
+                        maxLength={16}
+                        required
+                        value={confirmPin}
+                        onChange={(e) => setConfirmPin(e.target.value)}
+                        placeholder="••••••"
+                        className="w-full px-3 py-2 text-xs bg-white border border-neutral-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                      />
+                    </div>
+                    <div className="sm:col-span-3 flex justify-end">
+                      <button
+                        type="submit"
+                        className="px-5 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
+                      >
+                        {language === 'bn' ? 'পিন আপডেট করুন' : 'Update Security PIN'}
+                      </button>
+                    </div>
                   </form>
                 </div>
 

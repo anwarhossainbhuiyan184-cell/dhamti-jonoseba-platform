@@ -109,14 +109,15 @@ export const Footer: React.FC<FooterProps> = ({
                 <span className="text-white font-bold text-xs sm:text-sm">
                   {language === 'bn' ? 'প্রশাসনিক ও সেবা দল প্যানেল' : 'Administrative & Service Cell Portal'}
                 </span>
-                <span className="px-1.5 py-0.5 bg-neutral-800 text-neutral-400 text-[10px] font-mono rounded">
-                  PIN 223344
+                <span className="px-2 py-0.5 bg-neutral-800/90 text-emerald-400 border border-emerald-900/60 text-[10px] font-medium rounded flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                  {language === 'bn' ? 'সুরক্ষিত প্রবেশ' : 'Encrypted Access'}
                 </span>
               </div>
               <p className="text-[11px] text-neutral-400 mt-0.5 leading-relaxed">
                 {language === 'bn'
-                  ? 'শুধুমাত্র অ্যাডমিনের জন্য: অভিযোগের স্ট্যাটাস পরিবর্তন, গোপন মোবাইল নম্বর ও এক্সেল/গুগল শিট ব্যাকআপ।'
-                  : 'Restricted for Admin: Complaint status dispatch, private phone numbers, and Excel/Google Sheets sync.'}
+                  ? 'শুধুমাত্র অনুমোদিত অ্যাডমিন ও দায়িত্বপ্রাপ্ত সেবা দলের জন্য সংরক্ষিত প্যানেল।'
+                  : 'Restricted to authorized administrators and designated field service personnel.'}
               </p>
             </div>
           </div>
