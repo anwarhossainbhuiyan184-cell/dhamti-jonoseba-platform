@@ -1,0 +1,6 @@
+{
+  "name": "Jonoseba - Citizen Voice & Community Portal",
+  "description": "Civic problem reporting and community welfare portal for Md. Anwar Hossain Bhuiyan to listen to citizen issues, track area grievances, and resolve local problems.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
