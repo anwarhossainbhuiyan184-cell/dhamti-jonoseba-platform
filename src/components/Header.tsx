@@ -18,14 +18,11 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-200">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-6">
-        {/* Zone 1: Brand title, single line */}
+        {/* Zone 1: Brand title, single line (Text only) */}
         <a 
           href="#home" 
-          className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-neutral-900 whitespace-nowrap shrink-0 flex items-center gap-1.5 sm:gap-2"
+          className="text-base sm:text-lg md:text-xl font-extrabold tracking-tight text-emerald-900 hover:text-emerald-700 whitespace-nowrap shrink-0 transition-colors"
         >
-          <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm">
-            জ
-          </span>
           <span className="hidden min-[380px]:inline">{language === 'bn' ? 'জনসেবা মঞ্চ' : 'Jonoseba'}</span>
           <span className="min-[380px]:hidden">{language === 'bn' ? 'জনসেবা' : 'Seba'}</span>
         </a>

@@ -24,10 +24,7 @@ export const Footer: React.FC<FooterProps> = ({
           
           {/* Column 1: Brand & Leader */}
           <div className="md:col-span-2">
-            <div className="flex items-center gap-2 text-white font-bold text-base mb-2">
-              <span className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
-                জ
-              </span>
+            <div className="text-white font-extrabold text-base mb-2">
               <span>{language === 'bn' ? `ধামতী জনসেবা মঞ্চ — ${leaderProfile.name}` : `Dhamti Jonoseba — ${leaderProfile.name}`}</span>
             </div>
             <p className="text-neutral-400 text-xs max-w-md leading-relaxed">
