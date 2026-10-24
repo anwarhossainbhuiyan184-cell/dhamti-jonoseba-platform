@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b" />
+      <stop offset="50%" stop-color="#022c22" />
+      <stop offset="100%" stop-color="#011712" />
+    </linearGradient>
+    <radialGradient id="glowTopRight" cx="90%" cy="10%" r="60%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#022c22" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="glowBottomLeft" cx="10%" cy="90%" r="50%">
+      <stop offset="0%" stop-color="#059669" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#011712" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="40%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#b45309" />
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.08" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.02" />
+    </linearGradient>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Background Layer -->
+  <rect width="1200" height="630" fill="url(#bgGrad)" />
+  <rect width="1200" height="630" fill="url(#glowTopRight)" />
+  <rect width="1200" height="630" fill="url(#glowBottomLeft)" />
+
+  <!-- Subtle Geometric Civic Grid Patterns -->
+  <g opacity="0.04" stroke="#ffffff" stroke-width="1">
+    <line x1="0" y1="105" x2="1200" y2="105" />
+    <line x1="0" y1="210" x2="1200" y2="210" />
+    <line x1="0" y1="315" x2="1200" y2="315" />
+    <line x1="0" y1="420" x2="1200" y2="420" />
+    <line x1="0" y1="525" x2="1200" y2="525" />
+    <line x1="200" y1="0" x2="200" y2="630" />
+    <line x1="400" y1="0" x2="400" y2="630" />
+    <line x1="600" y1="0" x2="600" y2="630" />
+    <line x1="800" y1="0" x2="800" y2="630" />
+    <line x1="1000" y1="0" x2="1000" y2="630" />
+  </g>
+
+  <!-- Outer Border Frame -->
+  <rect x="24" y="24" width="1152" height="582" rx="28" fill="none" stroke="#10b981" stroke-width="2" stroke-opacity="0.3" />
+
+  <!-- Main Central Container Box -->
+  <rect x="70" y="70" width="1060" height="490" rx="24" fill="url(#cardGrad)" stroke="#34d399" stroke-width="1.5" stroke-opacity="0.25" filter="url(#cardShadow)" />
+
+  <!-- Top Civic Badge -->
+  <g transform="translate(110, 115)">
+    <rect width="330" height="42" rx="21" fill="#047857" stroke="#10b981" stroke-width="1" />
+    <circle cx="24" cy="21" r="7" fill="#fbbf24" />
+    <text x="44" y="27" font-family="'Hind Siliguri', 'Segoe UI', Arial, sans-serif" font-size="16" font-weight="700" fill="#ecfdf5" letter-spacing="1">
+      ধামতী ইউনিয়ন নাগরিক সেবা মঞ্চ
+    </text>
+  </g>
+
+  <!-- Right Civic Crest Emblem -->
+  <g transform="translate(930, 125)">
+    <!-- Outer Crest Circle -->
+    <circle cx="80" cy="80" r="76" fill="#065f46" stroke="#34d399" stroke-width="3" stroke-opacity="0.6" />
+    <circle cx="80" cy="80" r="66" fill="#044e3b" stroke="#fbbf24" stroke-width="1.5" stroke-opacity="0.8" stroke-dasharray="4 4" />
+    <!-- Bengali 'জ' Symbol -->
+    <path d="M 55 52 H 105 M 80 52 V 70 C 80 77 88 82 98 87 C 108 92 110 100 108 110 C 103 120 93 125 80 125 C 67 125 57 117 55 107" 
+          fill="none" 
+          stroke="#ffffff" 
+          stroke-width="10" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" />
+    <!-- Golden Star Accent -->
+    <polygon points="108,52 111,58 117,59 113,63 114,69 108,66 102,69 103,63 99,59 105,58" fill="url(#goldGrad)" />
+  </g>
+
+  <!-- Main Slogan (Large Headline) -->
+  <text x="110" y="240" font-family="'Hind Siliguri', 'Segoe UI', Arial, sans-serif" font-size="54" font-weight="800" fill="#ffffff" letter-spacing="-0.5">
+    আমাদের ধামতী আমরাই গড়ব
+  </text>
+
+  <!-- Sub Slogan (Golden Highlight) -->
+  <text x="110" y="305" font-family="'Hind Siliguri', 'Segoe UI', Arial, sans-serif" font-size="34" font-weight="700" fill="url(#goldGrad)">
+    একসাথে গড়ব আগামীর ধামতী
+  </text>
+
+  <!-- Leader Attribution Card -->
+  <g transform="translate(110, 345)">
+    <rect width="640" height="74" rx="16" fill="#044e3b" fill-opacity="0.8" stroke="#059669" stroke-width="1.5" />
+    
+    <text x="24" y="34" font-family="'Hind Siliguri', 'Segoe UI', Arial, sans-serif" font-size="14" font-weight="600" fill="#a7f3d0" letter-spacing="1">
+      উদ্যোগ ও তত্ত্বাবধানে:
+    </text>
+    <text x="24" y="60" font-family="'Hind Siliguri', 'Segoe UI', Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">
+      মোঃ আনোয়ার হোসেন ভূঁইয়া
+    </text>
+    
+    <line x1="330" y1="16" x2="330" y2="58" stroke="#065f46" stroke-width="2" />
+    
+    <text x="350" y="34" font-family="'Hind Siliguri', 'Segoe UI', Arial, sans-serif" font-size="13" font-weight="600" fill="#34d399">
+      নাগরিক অধিকার ও স্বচ্ছতা
+    </text>
+    <text x="350" y="58" font-family="'Hind Siliguri', 'Segoe UI', Arial, sans-serif" font-size="15" font-weight="600" fill="#e2e8f0">
+      সরাসরি সমস্যা জানান ও সমাধান দেখুন
+    </text>
+  </g>
+
+  <!-- Bottom Feature Badges / Highlights -->
+  <g transform="translate(110, 465)">
+    <!-- Pill 1: Problem Reporting -->
+    <g transform="translate(0, 0)">
+      <rect width="250" height="42" rx="12" fill="#064e3b" stroke="#10b981" stroke-width="1" stroke-opacity="0.4" />
+      <circle cx="22" cy="21" r="5" fill="#34d399" />
+      <text x="36" y="27" font-family="'Hind Siliguri', 'Segoe UI', Arial, sans-serif" font-size="15" font-weight="600" fill="#ecfdf5">
+        সরাসরি অভিযোগ নিরসন
+      </text>
+    </g>
+
+    <!-- Pill 2: Live Tracking -->
+    <g transform="translate(270, 0)">
+      <rect width="240" height="42" rx="12" fill="#064e3b" stroke="#10b981" stroke-width="1" stroke-opacity="0.4" />
+      <circle cx="22" cy="21" r="5" fill="#fbbf24" />
+      <text x="36" y="27" font-family="'Hind Siliguri', 'Segoe UI', Arial, sans-serif" font-size="15" font-weight="600" fill="#ecfdf5">
+        ২৪/৭ লাইভ ট্র্যাকিং কোড
+      </text>
+    </g>
+
+    <!-- Pill 3: Area Wise Development -->
+    <g transform="translate(530, 0)">
+      <rect width="240" height="42" rx="12" fill="#064e3b" stroke="#10b981" stroke-width="1" stroke-opacity="0.4" />
+      <circle cx="22" cy="21" r="5" fill="#38bdf8" />
+      <text x="36" y="27" font-family="'Hind Siliguri', 'Segoe UI', Arial, sans-serif" font-size="15" font-weight="600" fill="#ecfdf5">
+        ৯টি ওয়ার্ডের সমাধান পর্যবেক্ষণ
+      </text>
+    </g>
+  </g>
+
+  <!-- Official URL Branding at Bottom Right -->
+  <g transform="translate(860, 475)">
+    <text x="180" y="25" text-anchor="end" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="15" font-weight="700" fill="#6ee7b7" letter-spacing="1">
+      DHAMTI CIVIC PORTAL
+    </text>
+  </g>
+</svg>

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#064e3b" />
+    </linearGradient>
+    <linearGradient id="goldAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.25" />
+    </filter>
+  </defs>
+  
+  <!-- Outer Rounded Badge -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#emeraldGrad)" />
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="none" stroke="#34d399" stroke-width="1.5" stroke-opacity="0.4" />
+  
+  <!-- Subtle Civic Decorative Crest Ring -->
+  <circle cx="32" cy="32" r="23" fill="none" stroke="#6ee7b7" stroke-width="1" stroke-dasharray="2 3" opacity="0.35" />
+  
+  <!-- Bengali "জ" Letter Emblem -->
+  <g filter="url(#shadow)">
+    <path d="M 23 20 H 41 M 32 20 V 27 C 32 30 35 32 39 34 C 43 36 44 39 43 43 C 41 47 37 49 32 49 C 27 49 23 46 22 42" 
+          fill="none" 
+          stroke="#ffffff" 
+          stroke-width="4.5" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" />
+  </g>
+  
+  <!-- Civic Star / Starburst Sparkle in Gold -->
+  <circle cx="43" cy="20" r="3" fill="url(#goldAccent)" />
+</svg>
